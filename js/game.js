@@ -33,6 +33,44 @@ const stars = Array.from({ length: 34 }, (_, i) => ({
 // Oryginalne arkusze z assets — tło pierwszego etapu i animacje Billa.
 const stageImage = new Image();
 stageImage.src = "assets/stages/stage-1/Stages%20-%20Stage%201.png";
+
+// Logo CONTRA wycinane z oryginalnego arkusza ekranów tytułowych.
+let titleLogo = null;
+const titleSheet = new Image();
+titleSheet.src = "assets/miscellaneous/Miscellaneous%20-%20Title%20Screens.png";
+titleSheet.addEventListener("load", () => {
+  const crop = document.createElement("canvas");
+  crop.width = 240;
+  crop.height = 128;
+  const cropCtx = crop.getContext("2d", { willReadFrequently: true });
+  cropCtx.drawImage(titleSheet, 20, 448, 240, 128, 0, 0, 240, 128);
+  const pixels = cropCtx.getImageData(0, 0, crop.width, crop.height);
+  const d = pixels.data;
+  // Magenta z arkusza jest usuwana tylko tam, gdzie łączy się z krawędzią.
+  const seen = new Uint8Array(crop.width * crop.height);
+  const queue = new Int32Array(crop.width * crop.height);
+  let head = 0, tail = 0;
+  function magenta(i) {
+    const p = i * 4;
+    return d[p] > 190 && d[p + 2] > 190 && d[p + 1] < 90;
+  }
+  function seed(i) {
+    if (!seen[i] && magenta(i)) { seen[i] = 1; queue[tail++] = i; }
+  }
+  for (let x = 0; x < crop.width; x++) { seed(x); seed((crop.height - 1) * crop.width + x); }
+  for (let y = 0; y < crop.height; y++) { seed(y * crop.width); seed(y * crop.width + crop.width - 1); }
+  while (head < tail) {
+    const i = queue[head++];
+    d[i * 4 + 3] = 0;
+    const x = i % crop.width, y = (i / crop.width) | 0;
+    if (x) seed(i - 1);
+    if (x < crop.width - 1) seed(i + 1);
+    if (y) seed(i - crop.width);
+    if (y < crop.height - 1) seed(i + crop.width);
+  }
+  cropCtx.putImageData(pixels, 0, 0);
+  titleLogo = crop;
+});
 let billSheet = null;
 const billImage = new Image();
 billImage.src = "assets/characters/Playable%20Characters%20-%20Bill%20%26%20Lance.png";
@@ -137,11 +175,14 @@ function drawTitle() {
   drawJungle(0);
   drawSoldier(72, 181, 1.15, 1);
   drawSoldier(188, 181, 0.9, -1);
-  text("CONTRA", 128, 62, 34, "#e83a2e", "center");
-  text("VIETNAM", 128, 85, 10, "#f4d94c", "center");
-  rect(72, 96, 112, 1, "#9d4930");
-  text("THE JUNGLE WAR BEGINS", 128, 108, 7, "#d7d2b5", "center");
-  if (Math.floor(elapsed * 2) % 2 === 0) text("PRESS ENTER", 128, 140, 9, "#f5df45", "center");
+  if (titleLogo) ctx.drawImage(titleLogo, 24, 22, 208, 111);
+  else {
+    text("CONTRA", 128, 62, 34, "#e83a2e", "center");
+    text("VIETNAM", 128, 85, 10, "#f4d94c", "center");
+  }
+  text("VIETNAM", 128, 145, 10, "#f4d94c", "center");
+  if (Math.floor(elapsed * 2) % 2 === 0) text("PRESS START", 128, 171, 9, "#f5df45", "center");
+  text("1 PLAYER     HIGH SCORE  000000", 128, 225, 6, "#b5b39a", "center");
   text("1 PLAYER     HIGH SCORE  000000", 128, 225, 6, "#b5b39a", "center");
 }
 
