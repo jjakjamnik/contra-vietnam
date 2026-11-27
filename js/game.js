@@ -183,7 +183,6 @@ function drawTitle() {
   text("VIETNAM", 128, 145, 10, "#f4d94c", "center");
   if (Math.floor(elapsed * 2) % 2 === 0) text("PRESS START", 128, 171, 9, "#f5df45", "center");
   text("1 PLAYER     HIGH SCORE  000000", 128, 225, 6, "#b5b39a", "center");
-  text("1 PLAYER     HIGH SCORE  000000", 128, 225, 6, "#b5b39a", "center");
 }
 
 function drawJungle(offset) {
