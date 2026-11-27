@@ -163,8 +163,10 @@ function drawStage() {
     // Oryginalna panorama jest złożona z ekranów NES 256 px.
     // Rysujemy w skali 1:1, bez rozciągania w pionie.
     const sourceX = Math.max(0, Math.min(stageImage.naturalWidth - WIDTH, cameraX));
-    ctx.drawImage(stageImage, sourceX, 0, WIDTH, Math.min(136, stageImage.naturalHeight),
-      0, 45, WIDTH, Math.min(136, stageImage.naturalHeight));
+    // Dolny pasek arkusza zawiera podpisy rippera, nie grafikę poziomu.
+    const sourceHeight = Math.min(124, stageImage.naturalHeight);
+    ctx.drawImage(stageImage, sourceX, 0, WIDTH, sourceHeight,
+      0, HEIGHT - sourceHeight, WIDTH, sourceHeight);
   } else {
     drawJungle(cameraX);
   }
