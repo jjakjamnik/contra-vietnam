@@ -12,7 +12,7 @@ if (!ctx) throw new Error("Nie udało się uruchomić Canvas 2D.");
 const WIDTH = 256;
 const HEIGHT = 240;
 const GROUND = 181;
-const WORLD_WIDTH = 1728;
+const WORLD_WIDTH = 2048;
 ctx.imageSmoothingEnabled = false;
 
 const keys = new Set();
@@ -176,11 +176,8 @@ function drawPlayerSprite() {
   const frameIndex = moving ? Math.floor(elapsed * 10) % playerFrames.length : 0;
   const sprite = playerFrames[frameIndex];
   const dx = player.x - cameraX;
-  if (!sprite || !sprite.complete || !sprite.naturalWidth) {
-    drawSoldier(dx, player.y, 1, player.facing);
-    return;
-  }
-  const scale = 1.35;
+  if (!sprite || !sprite.complete || !sprite.naturalWidth) return;
+  const scale = 1.0;
   const w = sprite.naturalWidth * scale;
   const h = sprite.naturalHeight * scale;
   ctx.save();
@@ -273,7 +270,7 @@ function update(dt) {
     const ay = player.aimY ?? 0;
     bullets.push({
       x: player.x + ax * 12,
-      y: player.y - 15 + ay * 3,
+      y: player.y - 23 + ay * 3,
       vx: ax * 230,
       vy: ay * 230,
       life: 1.2
@@ -320,25 +317,17 @@ function hurtPlayer() {
 
 function drawGame() {
   drawStage();
-  // Małe bunkry / przeszkody w tle.
-  for (const bx of [350, 840, 1320, 1700]) {
-    const x = bx - cameraX;
-    if (x > -30 && x < WIDTH + 30) {
-      rect(x, 164, 24, 17, "#39413a"); rect(x + 4, 158, 16, 7, "#4e5944");
-      rect(x + 9, 168, 6, 8, "#171e1b");
-    }
-  }
   for (const e of enemies) {
     const sx = e.x - cameraX;
     if (sx > -25 && sx < WIDTH + 25) {
       const frame = enemyFrames[Math.floor(elapsed * 7) % enemyFrames.length];
       if (frame && frame.complete && frame.naturalWidth) {
-        const w = frame.naturalWidth * 1.35, h = frame.naturalHeight * 1.35;
+        const w = frame.naturalWidth, h = frame.naturalHeight;
         ctx.save();
         if (e.x < player.x) { ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.drawImage(frame, -w / 2, e.y - h, w, h); }
         else ctx.drawImage(frame, sx - w / 2, e.y - h, w, h);
         ctx.restore();
-      } else drawSoldier(sx, e.y, 0.95, e.x < player.x ? -1 : 1, true);
+      }
     }
   }
   for (const b of bullets) {
