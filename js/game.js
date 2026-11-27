@@ -140,7 +140,7 @@ function drawPlayerSprite() {
     drawSoldier(player.x - cameraX, player.y, 1, player.facing);
     return;
   }
-  const frames = [0, 64, 128, 192, 256, 320, 384, 448];
+  const frames = [0, 55, 110, 165, 220, 275, 330, 385, 440, 495, 550, 605, 660, 715];
   const moving = keys.has("arrowleft") || keys.has("arrowright") ||
                  keys.has("a") || keys.has("d");
   const frame = moving ? frames[Math.floor(elapsed * 12) % frames.length] : 0;
@@ -152,9 +152,9 @@ function drawPlayerSprite() {
   if (player.facing < 0) {
     ctx.translate(dx, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(billSheet, sx, sy, 64, 64, -32, player.y - 48, 64, 64);
+    ctx.drawImage(billSheet, sx, sy, 55, 55, -27, player.y - 43, 55, 55);
   } else {
-    ctx.drawImage(billSheet, sx, sy, 64, 64, dx - 32, player.y - 48, 64, 64);
+    ctx.drawImage(billSheet, sx, sy, 55, 55, dx - 27, player.y - 43, 55, 55);
   }
   ctx.restore();
 }
