@@ -98,7 +98,7 @@ billImage.addEventListener("load", () => {
 
   workCtx.putImageData(imageData, 0, 0);
   billSheet = work;
-});;
+});
 
 const player = {
   x: 34, y: GROUND, vy: 0, facing: 1, width: 12, height: 23,
