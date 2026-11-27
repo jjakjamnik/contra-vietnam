@@ -85,7 +85,7 @@ const enemyFrames = ["27", "28"].map(id => {
 
 const player = {
   x: 34, y: GROUND, vy: 0, facing: 1, width: 12, height: 23,
-  onGround: true, lives: 3, invulnerable: 0
+  onGround: true, prone: false, lives: 3, invulnerable: 0
 };
 
 const bullets = [];
@@ -164,9 +164,9 @@ function drawStage() {
     // Rysujemy w skali 1:1, bez rozciągania w pionie.
     const sourceX = Math.max(0, Math.min(stageImage.naturalWidth - WIDTH, cameraX));
     // Dolny pasek arkusza zawiera podpisy rippera, nie grafikę poziomu.
-    const sourceHeight = Math.min(124, stageImage.naturalHeight);
+    const sourceHeight = Math.min(HEIGHT, stageImage.naturalHeight);
     ctx.drawImage(stageImage, sourceX, 0, WIDTH, sourceHeight,
-      0, HEIGHT - sourceHeight, WIDTH, sourceHeight);
+      0, 0, WIDTH, sourceHeight);
   } else {
     drawJungle(cameraX);
   }
@@ -180,8 +180,8 @@ function drawPlayerSprite() {
   const dx = player.x - cameraX;
   if (!sprite || !sprite.complete || !sprite.naturalWidth) return;
   const scale = 1.0;
-  const w = sprite.naturalWidth * scale;
-  const h = sprite.naturalHeight * scale;
+  const w = sprite.naturalWidth * (player.prone ? 1.12 : scale);
+  const h = sprite.naturalHeight * (player.prone ? 0.56 : scale);
   ctx.save();
   if (player.invulnerable > 0 && Math.floor(elapsed * 12) % 2 === 1) ctx.globalAlpha = 0.35;
   if (player.facing < 0) {
@@ -215,7 +215,7 @@ function drawSoldier(x, feetY, scale = 1, facing = 1, tint = false) {
 }
 
 function resetGame() {
-  player.x = 34; player.y = GROUND; player.vy = 0; player.facing = 1; player.aimX = 1; player.aimY = 0;
+  player.x = 34; player.y = GROUND; player.vy = 0; player.facing = 1; player.aimX = 1; player.aimY = 0; player.prone = false;
   player.lives = 3; player.invulnerable = 0; player.onGround = true;
   bullets.length = 0; enemies.length = 0;
   cameraX = 0; score = 0; spawnIndex = 0; fireCooldown = 0;
@@ -246,7 +246,9 @@ function update(dt) {
   const up = keys.has("arrowup") || keys.has("w");
   const down = keys.has("arrowdown") || keys.has("s");
   const jump = keys.has("x") || keys.has(" ");
-  const speed = 76;
+  const prone = down && player.onGround;
+  player.prone = prone;
+  const speed = prone ? 34 : 76;
   if (left) { player.x -= speed * dt; player.facing = -1; }
   if (right) { player.x += speed * dt; player.facing = 1; }
 
@@ -260,7 +262,7 @@ function update(dt) {
     player.aimX = aimX / length;
     player.aimY = aimY / length;
   }
-  if (jump && player.onGround) { player.vy = -164; player.onGround = false; }
+  if (jump && player.onGround && !player.prone) { player.vy = -164; player.onGround = false; }
   player.x = Math.max(8, Math.min(WORLD_WIDTH - 24, player.x));
 
   player.vy += 420 * dt;
@@ -272,7 +274,7 @@ function update(dt) {
     const ay = player.aimY ?? 0;
     bullets.push({
       x: player.x + ax * 12,
-      y: player.y - 23 + ay * 3,
+      y: player.y - (player.prone ? 8 : 23) + ay * 3,
       vx: ax * 230,
       vy: ay * 230,
       life: 1.2
@@ -297,7 +299,7 @@ function update(dt) {
     if (!e.alive) continue;
     const direction = Math.sign(player.x - e.x);
     if (Math.abs(player.x - e.x) > 22) e.x += direction * e.speed * dt;
-    if (player.invulnerable <= 0 && Math.abs(player.x - e.x) < 11 && Math.abs(player.y - e.y) < 20) hurtPlayer();
+    if (player.invulnerable <= 0 && Math.abs(player.x - e.x) < 11 && Math.abs(player.y - e.y) < (player.prone ? 7 : 20)) hurtPlayer();
   }
   for (let i = enemies.length - 1; i >= 0; i--) if (!enemies[i].alive) enemies.splice(i, 1);
 
