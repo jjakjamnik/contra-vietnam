@@ -1,266 +1,135 @@
-
-/* =========================================================
-   CONTRA — RETRO ARCADE DESIGN
-   NES / PEGASUS STYLE
-   ========================================================= */
-
+/* CONTRA VIETNAM — pełnoekranowa oprawa arcade */
 :root {
-    --red: #e52b25;
-    --yellow: #f5df45;
-    --white: #eeeeee;
-    --dark: #080808;
-    --panel: #151515;
-    --border: #555;
+  color-scheme: dark;
+  --red: #e52b25;
+  --yellow: #f5df45;
+  --white: #eeeeee;
+  --dark: #080808;
 }
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background: #050607;
 }
-
-html {
-    min-height: 100%;
-    background: var(--dark);
-}
-
 body {
-    min-height: 100vh;
-    background:
-        radial-gradient(
-            ellipse at center,
-            #202020 0%,
-            #101010 45%,
-            #050505 100%
-        );
-
-    color: var(--white);
-    font-family: Arial, Helvetica, sans-serif;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    overflow-x: hidden;
+  min-height: 100svh;
+  color: var(--white);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 45%, #202522 0%, #0c100f 58%, #020303 100%);
 }
-
-/* =========================================================
-   GŁÓWNY KONTENER
-   ========================================================= */
-
 #game-container {
-    width: 100%;
-    max-width: 1100px;
-    min-height: 100vh;
-
-    padding: 35px 20px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  width: 100%;
+  height: 100svh;
+  min-height: 100svh;
+  padding: 10px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
 }
-
-/* =========================================================
-   LOGO CONTRA
-   ========================================================= */
-
+#game-header {
+  flex: 0 0 auto;
+  line-height: 1;
+}
 h1 {
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: clamp(48px, 9vw, 88px);
-    font-weight: 900;
-
-    color: var(--red);
-
-    letter-spacing: 14px;
-    line-height: 1;
-
-    margin-bottom: 12px;
-
-    text-shadow:
-        4px 4px 0 #680b08,
-        7px 7px 0 #250504,
-        0 0 25px rgba(229, 43, 37, 0.3);
+  font-family: Impact, "Arial Black", sans-serif;
+  font-size: clamp(20px, 3.2vh, 34px);
+  letter-spacing: 10px;
+  color: var(--red);
+  text-shadow: 2px 2px 0 #570b08, 0 0 18px rgba(229,43,37,.25);
 }
-
-/* =========================================================
-   EKRAN GRY
-   ========================================================= */
-
 #game-screen {
-    position: relative;
-
-    display: inline-block;
-
-    padding: 14px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #292929,
-            #111111 45%,
-            #252525
-        );
-
-    border: 3px solid #666;
-    border-radius: 5px;
-
-    box-shadow:
-        0 0 0 3px #090909,
-        0 0 0 6px #333,
-        0 15px 40px rgba(0, 0, 0, 0.9),
-        0 0 35px rgba(229, 43, 37, 0.12);
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 5px;
+  border: 2px solid #555c55;
+  border-radius: 4px;
+  background: linear-gradient(145deg, #242a25, #090c0a 50%, #1a201b);
+  box-shadow: 0 0 0 2px #050605, 0 12px 40px #000, 0 0 30px rgba(125,155,90,.08);
+  overflow: hidden;
 }
-
-/* =========================================================
-   CANVAS
-   ========================================================= */
-
 #game-canvas {
-    display: block;
-
-    width: 768px;
-    height: 720px;
-
-    max-width: 100%;
-
-    background: #000;
-
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
+  display: block;
+  width: min(96vw, calc((100svh - 122px) * 1.3333));
+  height: min(82svh, calc(96vw * .75));
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
-
-/* =========================================================
-   EFEKT STAREGO TELEWIZORA
-   ========================================================= */
-
 #game-screen::after {
-    content: "";
-
-    position: absolute;
-    inset: 14px;
-
-    pointer-events: none;
-
-    background:
-        repeating-linear-gradient(
-            to bottom,
-            rgba(0, 0, 0, 0) 0px,
-            rgba(0, 0, 0, 0) 2px,
-            rgba(0, 0, 0, 0.13) 3px
-        );
-
-    opacity: 0.55;
+  content: "";
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,.11) 3px);
+  opacity: .38;
 }
-
-/* =========================================================
-   STATUS GRY
-   ========================================================= */
-
 #game-status {
-    margin-top: 25px;
-
-    color: var(--yellow);
-
-    font-family: "Courier New", monospace;
-    font-size: 15px;
-    font-weight: bold;
-
-    letter-spacing: 3px;
-    text-transform: uppercase;
-
-    text-shadow:
-        0 0 8px rgba(245, 223, 69, 0.3);
+  flex: 0 0 auto;
+  min-height: 15px;
+  color: var(--yellow);
+  font: bold clamp(10px, 1.6vh, 14px)/1.2 "Courier New", monospace;
+  letter-spacing: 2px;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(245,223,69,.3);
 }
-
-/* =========================================================
-   STEROWANIE
-   ========================================================= */
-
 #game-controls {
-    margin-top: 22px;
-
-    color: #888;
-
-    font-family: "Courier New", monospace;
-    font-size: 13px;
-
-    line-height: 2.2;
-    letter-spacing: 1px;
-
-    text-align: center;
+  flex: 0 0 auto;
+  color: #aaa;
+  font: 11px/1.35 "Courier New", monospace;
+  letter-spacing: 1px;
+  text-align: center;
+  padding-bottom: 2px;
 }
-
-#game-controls span {
-    color: var(--red);
-    font-weight: bold;
+.control-info { display: none; }
+.control-keys {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 13px;
+  row-gap: 2px;
 }
-
-/* =========================================================
-   DOLNY PODPIS
-   ========================================================= */
-
+#game-controls span:nth-child(odd) { color: var(--red); font-weight: bold; }
 #game-container::after {
-    content: "KONAMI STYLE • ARCADE CLASSIC";
-
-    margin-top: 30px;
-
-    color: #444;
-
-    font-family: "Courier New", monospace;
-    font-size: 10px;
-
-    letter-spacing: 4px;
+  content: "KONAMI STYLE • ARCADE CLASSIC";
+  flex: 0 0 auto;
+  color: #454a43;
+  font: 9px/1 "Courier New", monospace;
+  letter-spacing: 3px;
+  padding-bottom: 1px;
 }
-
-/* =========================================================
-   RESPONSYWNOŚĆ
-   ========================================================= */
-
-@media (max-width: 850px) {
-
-    #game-container {
-        padding: 25px 12px;
-    }
-
-    #game-canvas {
-        width: min(768px, 100%);
-        height: auto;
-    }
-
-    h1 {
-        letter-spacing: 8px;
-    }
-
+@media (max-width: 600px) {
+  #game-container { padding: 5px 5px 6px; gap: 4px; }
+  h1 { font-size: 19px; letter-spacing: 6px; }
+  #game-screen { padding: 2px; border-width: 1px; }
+  #game-canvas {
+    width: min(98vw, calc((100svh - 104px) * 1.3333));
+    height: min(80svh, calc(98vw * .75));
+  }
+  #game-status { font-size: 9px; letter-spacing: 1px; }
+  #game-controls { font-size: 9px; }
+  .control-keys { column-gap: 8px; }
+  #game-container::after { font-size: 7px; letter-spacing: 2px; }
 }
-
-@media (max-width: 480px) {
-
-    #game-container {
-        padding: 20px 8px;
-    }
-
-    h1 {
-        font-size: 42px;
-        letter-spacing: 5px;
-    }
-
-    #game-screen {
-        padding: 7px;
-        border-width: 2px;
-    }
-
-    #game-screen::after {
-        inset: 7px;
-    }
-
-    #game-status {
-        font-size: 11px;
-        letter-spacing: 2px;
-    }
-
-    #game-controls {
-        font-size: 11px;
-    }
-
+@media (max-height: 520px) {
+  #game-container { padding: 3px 8px; gap: 2px; }
+  h1 { font-size: 16px; }
+  #game-canvas {
+    width: min(96vw, calc((100svh - 72px) * 1.3333));
+    height: min(78svh, calc(96vw * .75));
+  }
+  #game-controls, #game-container::after { display: none; }
 }
