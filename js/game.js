@@ -283,7 +283,7 @@ function hurtPlayer() {
 }
 
 function drawGame() {
-  drawJungle(cameraX);
+  drawStage();
   // Małe bunkry / przeszkody w tle.
   for (const bx of [350, 840, 1320, 1700]) {
     const x = bx - cameraX;
