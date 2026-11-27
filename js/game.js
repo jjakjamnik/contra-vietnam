@@ -11,7 +11,8 @@ if (!ctx) throw new Error("Nie udało się uruchomić Canvas 2D.");
 
 const WIDTH = 256;
 const HEIGHT = 240;
-const GROUND = 190;
+const GROUND = 181;
+const WORLD_WIDTH = 1728;
 ctx.imageSmoothingEnabled = false;
 
 const keys = new Set();
@@ -28,6 +29,32 @@ let spawnIndex = 0;
 const stars = Array.from({ length: 34 }, (_, i) => ({
   x: (i * 73 + 19) % WIDTH, y: 12 + ((i * 37) % 92), phase: i * 0.7
 }));
+
+// Oryginalne arkusze z assets — tło pierwszego etapu i animacje Billa.
+const stageImage = new Image();
+stageImage.src = "assets/stages/stage-1/Stages%20-%20Stage%201.png";
+let billSheet = null;
+const billImage = new Image();
+billImage.src = "assets/characters/Playable%20Characters%20-%20Bill%20%26%20Lance.png";
+billImage.addEventListener("load", () => {
+  const work = document.createElement("canvas");
+  work.width = billImage.naturalWidth;
+  work.height = billImage.naturalHeight;
+  const workCtx = work.getContext("2d", { willReadFrequently: true });
+  workCtx.drawImage(billImage, 0, 0);
+  const pixels = workCtx.getImageData(0, 0, work.width, work.height);
+  // Arkusz ma jednolite kolorowe pola tła. Usuwamy tylko kolor tła
+  // z obszaru Billa, zostawiając piksele postaci.
+  const key = workCtx.getImageData(2, 2, 1, 1).data;
+  for (let i = 0; i < pixels.data.length; i += 4) {
+    const dr = Math.abs(pixels.data[i] - key[0]);
+    const dg = Math.abs(pixels.data[i + 1] - key[1]);
+    const db = Math.abs(pixels.data[i + 2] - key[2]);
+    if (dr < 9 && dg < 9 && db < 9) pixels.data[i + 3] = 0;
+  }
+  workCtx.putImageData(pixels, 0, 0);
+  billSheet = work;
+});
 
 const player = {
   x: 34, y: GROUND, vy: 0, facing: 1, width: 12, height: 23,
@@ -94,6 +121,44 @@ function drawJungle(offset) {
   }
 }
 
+function drawStage() {
+  if (stageImage.complete && stageImage.naturalWidth > 0) {
+    // Oryginalna panorama etapu 1 ma 3456 px szerokości;
+    // wyświetlamy ją w skali 1:2, przewijając razem z kamerą.
+    const sourceX = Math.max(0, Math.min(stageImage.naturalWidth - WIDTH * 2, cameraX * 2));
+    ctx.drawImage(stageImage, sourceX, 0, WIDTH * 2, stageImage.naturalHeight,
+      0, 105, WIDTH, 122);
+    // Przyciemniamy górną część panoramy, żeby HUD był czytelny.
+    rect(0, 15, WIDTH, 12, "rgba(5, 10, 12, 0.28)");
+  } else {
+    drawStage();
+  }
+}
+
+function drawPlayerSprite() {
+  if (!billSheet) {
+    drawSoldier(player.x - cameraX, player.y, 1, player.facing);
+    return;
+  }
+  const frames = [0, 64, 128, 192, 256, 320, 384, 448];
+  const moving = keys.has("arrowleft") || keys.has("arrowright") ||
+                 keys.has("a") || keys.has("d");
+  const frame = moving ? frames[Math.floor(elapsed * 12) % frames.length] : 0;
+  const sx = frame;
+  const sy = 0;
+  const dx = player.x - cameraX;
+  ctx.save();
+  if (player.invulnerable > 0 && Math.floor(elapsed * 12) % 2 === 1) ctx.globalAlpha = 0.35;
+  if (player.facing < 0) {
+    ctx.translate(dx, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(billSheet, sx, sy, 64, 64, -32, player.y - 48, 64, 64);
+  } else {
+    ctx.drawImage(billSheet, sx, sy, 64, 64, dx - 32, player.y - 48, 64, 64);
+  }
+  ctx.restore();
+}
+
 function drawSoldier(x, feetY, scale = 1, facing = 1, tint = false) {
   ctx.save();
   ctx.translate(Math.round(x), Math.round(feetY));
@@ -115,7 +180,7 @@ function drawSoldier(x, feetY, scale = 1, facing = 1, tint = false) {
 }
 
 function resetGame() {
-  player.x = 34; player.y = GROUND; player.vy = 0; player.facing = 1;
+  player.x = 34; player.y = GROUND; player.vy = 0; player.facing = 1; player.aimX = 1; player.aimY = 0;
   player.lives = 3; player.invulnerable = 0; player.onGround = true;
   bullets.length = 0; enemies.length = 0;
   cameraX = 0; score = 0; spawnIndex = 0; fireCooldown = 0;
@@ -143,27 +208,48 @@ function update(dt) {
 
   const left = keys.has("arrowleft") || keys.has("a");
   const right = keys.has("arrowright") || keys.has("d");
+  const up = keys.has("arrowup") || keys.has("w");
+  const down = keys.has("arrowdown") || keys.has("s");
   const jump = keys.has("x") || keys.has(" ");
   const speed = 76;
   if (left) { player.x -= speed * dt; player.facing = -1; }
   if (right) { player.x += speed * dt; player.facing = 1; }
+
+  // Kierunek strzału wybierany niezależnie od skoku:
+  // góra/dół + lewo/prawo pozwalają strzelać także po skosie.
+  let aimX = right ? 1 : left ? -1 : 0;
+  let aimY = up ? -1 : down ? 1 : 0;
+  if (aimX === 0 && aimY === 0) aimX = player.facing;
+  if (aimX !== 0 || aimY !== 0) {
+    const length = Math.hypot(aimX, aimY) || 1;
+    player.aimX = aimX / length;
+    player.aimY = aimY / length;
+  }
   if (jump && player.onGround) { player.vy = -164; player.onGround = false; }
-  player.x = Math.max(8, Math.min(1900, player.x));
+  player.x = Math.max(8, Math.min(WORLD_WIDTH - 24, player.x));
 
   player.vy += 420 * dt;
   player.y += player.vy * dt;
   if (player.y >= GROUND) { player.y = GROUND; player.vy = 0; player.onGround = true; }
 
   if ((keys.has("z") || keys.has("j")) && fireCooldown <= 0) {
-    bullets.push({ x: player.x + player.facing * 12, y: player.y - 14, vx: player.facing * 210, life: 1.2 });
+    const ax = player.aimX ?? player.facing;
+    const ay = player.aimY ?? 0;
+    bullets.push({
+      x: player.x + ax * 12,
+      y: player.y - 15 + ay * 3,
+      vx: ax * 230,
+      vy: ay * 230,
+      life: 1.2
+    });
     fireCooldown = 0.19;
   }
 
-  cameraX = Math.max(0, Math.min(1900 - WIDTH + 20, player.x - 75));
+  cameraX = Math.max(0, Math.min(WORLD_WIDTH - WIDTH, player.x - 75));
   spawnEnemies();
 
   for (const b of bullets) {
-    b.x += b.vx * dt; b.life -= dt;
+    b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
     for (const e of enemies) {
       if (e.alive && Math.abs(b.x - e.x) < 11 && Math.abs(b.y - (e.y - 13)) < 14) {
         e.alive = false; b.life = 0; score += 100; break;
@@ -180,7 +266,7 @@ function update(dt) {
   }
   for (let i = enemies.length - 1; i >= 0; i--) if (!enemies[i].alive) enemies.splice(i, 1);
 
-  if (player.x >= 1870) {
+  if (player.x >= WORLD_WIDTH - 28) {
     victory = true;
     if (statusMessage) statusMessage.textContent = "MISJA UKOŃCZONA!";
   }
@@ -217,7 +303,7 @@ function drawGame() {
   }
   const px = player.x - cameraX;
   if (player.invulnerable <= 0 || Math.floor(elapsed * 12) % 2 === 0) {
-    drawSoldier(px, player.y, 1, player.facing);
+    drawPlayerSprite();
   }
 
   // HUD.
