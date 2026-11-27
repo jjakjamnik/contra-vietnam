@@ -82,8 +82,6 @@ const enemyFrames = ["27", "28"].map(id => {
   img.src = `assets/sprites/raw/contra/sprite_${id}.png`;
   return img;
 });
-const enemyShootSprite = new Image();
-enemyShootSprite.src = "assets/sprites/raw/contra/sprite_2c.png";
 
 const player = {
   x: 34, y: GROUND, vy: 0, facing: 1, width: 12, height: 23,
@@ -120,8 +118,16 @@ function drawTitle() {
   ctx.lineTo(230, 135); ctx.lineTo(256, 112); ctx.lineTo(256, 180);
   ctx.lineTo(0, 180); ctx.closePath(); ctx.fill();
   drawJungle(0);
-  drawSoldier(72, 181, 1.15, 1);
-  drawSoldier(188, 181, 0.9, -1);
+  const titleFighter = playerFrames[0];
+  if (titleFighter && titleFighter.complete && titleFighter.naturalWidth) {
+    const w = titleFighter.naturalWidth * 1.7;
+    const h = titleFighter.naturalHeight * 1.7;
+    ctx.drawImage(titleFighter, 72 - w / 2, 181 - h, w, h);
+    ctx.save();
+    ctx.translate(188, 0); ctx.scale(-1, 1);
+    ctx.drawImage(titleFighter, -w / 2, 181 - h, w, h);
+    ctx.restore();
+  }
   if (titleLogo) ctx.drawImage(titleLogo, 24, 22, 208, 111);
   else {
     text("CONTRA", 128, 62, 34, "#e83a2e", "center");
