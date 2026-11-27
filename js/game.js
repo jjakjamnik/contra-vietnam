@@ -131,7 +131,7 @@ function drawStage() {
     // Przyciemniamy górną część panoramy, żeby HUD był czytelny.
     rect(0, 15, WIDTH, 12, "rgba(5, 10, 12, 0.28)");
   } else {
-    drawStage();
+    drawJungle(cameraX);
   }
 }
 
