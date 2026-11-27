@@ -37,24 +37,68 @@ let billSheet = null;
 const billImage = new Image();
 billImage.src = "assets/characters/Playable%20Characters%20-%20Bill%20%26%20Lance.png";
 billImage.addEventListener("load", () => {
+  // Pracujemy na fragmencie arkusza zawierającym animacje Billa.
+  // Tło wycinamy flood-fillem od krawędzi, a nie globalnie:
+  // niebieskie piksele ubrania pozostają nietknięte.
+  const cropWidth = 850;
+  const cropHeight = 220;
   const work = document.createElement("canvas");
-  work.width = billImage.naturalWidth;
-  work.height = billImage.naturalHeight;
+  work.width = cropWidth;
+  work.height = cropHeight;
   const workCtx = work.getContext("2d", { willReadFrequently: true });
-  workCtx.drawImage(billImage, 0, 0);
-  const pixels = workCtx.getImageData(0, 0, work.width, work.height);
-  // Arkusz ma jednolite kolorowe pola tła. Usuwamy tylko kolor tła
-  // z obszaru Billa, zostawiając piksele postaci.
-  const key = workCtx.getImageData(2, 2, 1, 1).data;
-  for (let i = 0; i < pixels.data.length; i += 4) {
-    const dr = Math.abs(pixels.data[i] - key[0]);
-    const dg = Math.abs(pixels.data[i + 1] - key[1]);
-    const db = Math.abs(pixels.data[i + 2] - key[2]);
-    if (dr < 9 && dg < 9 && db < 9) pixels.data[i + 3] = 0;
+  workCtx.drawImage(billImage, 0, 0, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+  const imageData = workCtx.getImageData(0, 0, cropWidth, cropHeight);
+  const data = imageData.data;
+  const pixelCount = cropWidth * cropHeight;
+  const visited = new Uint8Array(pixelCount);
+  const queue = new Int32Array(pixelCount);
+  let head = 0;
+  let tail = 0;
+
+  // Kolor tła pobieramy z pustego narożnika arkusza.
+  const keyIndex = (2 * cropWidth + 2) * 4;
+  const kr = data[keyIndex], kg = data[keyIndex + 1], kb = data[keyIndex + 2];
+  const tolerance = 42;
+
+  function isBackground(index) {
+    const p = index * 4;
+    const dr = data[p] - kr;
+    const dg = data[p + 1] - kg;
+    const db = data[p + 2] - kb;
+    return dr * dr + dg * dg + db * db <= tolerance * tolerance;
   }
-  workCtx.putImageData(pixels, 0, 0);
+
+  // Dodajemy tylko niebieskie piksele stykające się z zewnętrzną krawędzią.
+  function seed(index) {
+    if (!visited[index] && isBackground(index)) {
+      visited[index] = 1;
+      queue[tail++] = index;
+    }
+  }
+  for (let x = 0; x < cropWidth; x++) {
+    seed(x);
+    seed((cropHeight - 1) * cropWidth + x);
+  }
+  for (let y = 0; y < cropHeight; y++) {
+    seed(y * cropWidth);
+    seed(y * cropWidth + cropWidth - 1);
+  }
+
+  while (head < tail) {
+    const index = queue[head++];
+    data[index * 4 + 3] = 0;
+    const x = index % cropWidth;
+    const y = (index / cropWidth) | 0;
+    if (x > 0) seed(index - 1);
+    if (x < cropWidth - 1) seed(index + 1);
+    if (y > 0) seed(index - cropWidth);
+    if (y < cropHeight - 1) seed(index + cropWidth);
+  }
+
+  workCtx.putImageData(imageData, 0, 0);
   billSheet = work;
-});
+});;
 
 const player = {
   x: 34, y: GROUND, vy: 0, facing: 1, width: 12, height: 23,
