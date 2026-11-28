@@ -7,6 +7,7 @@ const SPRITES = {
     "assets/sprites/raw/contra/sprite_05.png"
   ],
   jump: ["assets/sprites/raw/contra/sprite_08.png", "assets/sprites/raw/contra/sprite_09.png"],
+  fire: "assets/sprites/raw/contra/sprite_06.png",
   prone: "assets/sprites/raw/contra/sprite_17.png"
 };
 
@@ -15,8 +16,8 @@ export function startMovementTest({ playerCount = 1, onExit }) {
   root.className = "movement-test";
   root.innerHTML = `
     <header class="test-hud">
-      <div>CONTRA VIETNAM <span>— TEST RUCHU</span></div>
-      <div class="test-hint">A / D lub ← / → RUCH &nbsp; SPACE SKOK &nbsp; ↓ KUCANIE &nbsp; ESC MENU</div>
+      <div>CONTRA VIETNAM <span>— TEST RUCHU I OGNIA</span></div>
+      <div class="test-hint">A / D lub ← / → RUCH &nbsp; SPACE SKOK &nbsp; ↓ KUCANIE &nbsp; Z / J STRZAŁ &nbsp; ESC MENU</div>
     </header>
     <div class="test-world">
       <div class="test-sky"></div>
@@ -30,7 +31,6 @@ export function startMovementTest({ playerCount = 1, onExit }) {
   const world = root.querySelector(".test-world");
   const player = root.querySelector(".test-player");
   const img = player.querySelector("img");
-  const ground = root.querySelector(".test-ground");
   let x = Math.max(30, world.clientWidth * 0.18);
   let y = 0;
   let vy = 0;
@@ -41,20 +41,28 @@ export function startMovementTest({ playerCount = 1, onExit }) {
   let last = 0;
   let walkClock = 0;
   let jumpClock = 0;
+  let fireClock = 0;
+  let running = true;
   const keys = new Set();
+  const shots = [];
   const gravity = 1450;
   const jumpVelocity = -620;
   const speed = 190;
+  const shotSpeed = 560;
+  const fireInterval = 0.14;
 
   function setSprite(src) {
     if (img.getAttribute("src") !== src) img.src = src;
   }
-  function updateSprite(dt) {
+
+  function updateSprite(dt, firing) {
     if (crouching && onGround) {
       setSprite(SPRITES.prone);
     } else if (!onGround) {
       jumpClock += dt;
       setSprite(SPRITES.jump[Math.floor(jumpClock / 0.12) % SPRITES.jump.length]);
+    } else if (firing && !frame) {
+      setSprite(SPRITES.fire);
     } else if (Math.abs(frame) > 0) {
       walkClock += dt;
       const idx = Math.floor(walkClock / 0.11) % SPRITES.walk.length;
@@ -69,7 +77,31 @@ export function startMovementTest({ playerCount = 1, onExit }) {
     player.classList.toggle("is-prone", crouching && onGround);
   }
 
+  function spawnShot() {
+    const shot = document.createElement("i");
+    shot.className = "test-shot";
+    const muzzleX = x + (facing > 0 ? 43 : 7);
+    const muzzleY = world.clientHeight * 0.78 - y - 43;
+    shot.style.left = `${muzzleX}px`;
+    shot.style.top = `${muzzleY}px`;
+    world.append(shot);
+    shots.push({ element: shot, x: muzzleX, y: muzzleY, vx: facing * shotSpeed });
+  }
+
+  function updateShots(dt) {
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const shot = shots[i];
+      shot.x += shot.vx * dt;
+      shot.element.style.left = `${shot.x}px`;
+      if (shot.x < -20 || shot.x > world.clientWidth + 20) {
+        shot.element.remove();
+        shots.splice(i, 1);
+      }
+    }
+  }
+
   function tick(time) {
+    if (!running) return;
     const dt = Math.min((time - last) / 1000 || 0, 0.033);
     last = time;
     const left = keys.has("arrowleft") || keys.has("a");
@@ -86,8 +118,20 @@ export function startMovementTest({ playerCount = 1, onExit }) {
       if (y >= 0) { y = 0; vy = 0; onGround = true; }
     }
 
+    const firing = keys.has("z") || keys.has("j");
+    if (firing) {
+      fireClock -= dt;
+      if (fireClock <= 0) {
+        spawnShot();
+        fireClock = fireInterval;
+      }
+    } else {
+      fireClock = 0;
+    }
+
     player.style.transform = `translate(${x}px, ${y}px)`;
-    updateSprite(dt);
+    updateShots(dt);
+    updateSprite(dt, firing);
     requestAnimationFrame(tick);
   }
 
@@ -103,8 +147,9 @@ export function startMovementTest({ playerCount = 1, onExit }) {
     keys.add(key);
   }
   function keyup(event) { keys.delete(event.key.toLowerCase()); }
-  function resize() { x = Math.min(x, world.clientWidth - 54); }
+  function resize() { x = Math.max(0, Math.min(x, world.clientWidth - 54)); }
   function cleanup() {
+    running = false;
     window.removeEventListener("keydown", keydown);
     window.removeEventListener("keyup", keyup);
     window.removeEventListener("resize", resize);

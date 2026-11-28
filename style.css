@@ -205,3 +205,19 @@ body {
   .test-hud { gap:8px; }
   .test-hint { max-width:90%; }
 }
+
+
+/* Contra-style test bullets */
+.test-shot {
+  position:absolute;
+  z-index:4;
+  display:block;
+  width:13px;
+  height:4px;
+  margin-top:-2px;
+  background:#fff4b0;
+  border:1px solid #f4c84b;
+  box-shadow:0 0 5px 1px rgba(255,218,91,.65);
+  image-rendering:pixelated;
+  pointer-events:none;
+}
