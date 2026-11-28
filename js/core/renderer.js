@@ -17,7 +17,7 @@ export class Renderer {
   }
   text(value, x, y, size = 8, color = "#fff", align = "left") {
     const ctx = this.ctx;
-    ctx.font = `bold ${size}px monospace`;
+    ctx.font = `${size}px "Press Start 2P", monospace`;
     ctx.textAlign = align;
     ctx.textBaseline = "middle";
     ctx.fillStyle = color;
