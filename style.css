@@ -187,10 +187,12 @@ body {
   image-rendering:pixelated; image-rendering:crisp-edges;
 }
 .test-player.face-left img { transform:translateX(-50%) scaleX(-1); }
-/* Bill walking remains at the reference size; jump is 30% smaller,
-   prone is 10% smaller. Keep facing direction in each scaled pose. */
+/* Walking is 5% larger; jump is 30% smaller, prone is 10% smaller.
+   Keep facing direction in each scaled pose. */
+.test-player:not(.is-jumping):not(.is-prone):not(.is-crouching) img { transform:translateX(-50%) scale(1.05); }
+.test-player:not(.is-jumping):not(.is-prone):not(.is-crouching).face-left img { transform:translateX(-50%) scaleX(-1) scale(1.05); }
 .test-player.is-jumping:not(.face-left) img { transform:translateX(-50%) scale(.7); }
-.test-player.is-jumping.face-left img { transform:translateX(-50%) scaleX(-1) scale(.8); }
+.test-player.is-jumping.face-left img { transform:translateX(-50%) scaleX(-1) scale(.7); }
 .test-player.is-prone:not(.face-left) img { transform:translateX(-50%) scale(.9); }
 .test-player.is-prone.face-left img { transform:translateX(-50%) scaleX(-1) scale(.9); }
 .test-player.is-crouching { height:68px; }
