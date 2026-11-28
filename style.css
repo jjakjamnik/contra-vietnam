@@ -176,13 +176,18 @@ body {
   width:54px; height:68px; transform-origin:bottom left;
   image-rendering:pixelated;
 }
+/* Every pose uses the same 68px character height. This prevents the
+   jump/prone source PNGs from appearing larger or smaller than the walk. */
 .test-player img {
-  position:absolute; left:0; bottom:0;
-  width:54px; height:68px; object-fit:contain;
+  position:absolute; left:50%; bottom:0;
+  width:auto; height:68px; max-width:90px;
+  object-fit:contain;
+  transform:translateX(-50%);
+  transform-origin:bottom center;
   image-rendering:pixelated; image-rendering:crisp-edges;
 }
-.test-player.face-left img { transform:scaleX(-1); }
-.test-player.is-crouching { height:42px; }
+.test-player.face-left img { transform:translateX(-50%) scaleX(-1); }
+.test-player.is-crouching { height:68px; }
 .test-footer {
   position:absolute; z-index:5; left:0; right:0; bottom:3%;
   text-align:center; color:#d5c66a;
