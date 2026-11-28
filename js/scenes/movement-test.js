@@ -6,8 +6,8 @@ const SPRITES = {
     "assets/sprites/raw/contra/sprite_04.png",
     "assets/sprites/raw/contra/sprite_05.png"
   ],
-  jump: "assets/sprites/raw/contra/sprite_08.png",
-  crouch: "assets/sprites/raw/contra/sprite_09.png"
+  jump: "assets/sprites/raw/contra/sprite_0b.png",
+  crouch: "assets/sprites/raw/contra/sprite_0a.png"
 };
 
 export function startMovementTest({ playerCount = 1, onExit }) {
@@ -82,7 +82,7 @@ export function startMovementTest({ playerCount = 1, onExit }) {
       if (y >= 0) { y = 0; vy = 0; onGround = true; }
     }
 
-    player.style.transform = `translate(${x}px, ${-y}px)`;
+    player.style.transform = `translate(${x}px, ${y}px)`;
     updateSprite(dt);
     requestAnimationFrame(tick);
   }
