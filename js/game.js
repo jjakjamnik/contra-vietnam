@@ -1,3 +1,5 @@
+import { startMovementTest } from "./scenes/movement-test.js";
+
 const choices = [...document.querySelectorAll(".choice")];
 let selected = 0;
 
@@ -11,10 +13,11 @@ function select(index) {
 }
 
 function startGame(playerCount) {
-  // Ekran tytułowy jest pierwszym etapem. Właściwe sceny gry dołączymy,
-  // gdy zaczniemy budować plansze i silnik rozgrywki.
-  window.dispatchEvent(new CustomEvent("contra:start", { detail: { playerCount } }));
-  console.info(`CONTRA VIETNAM — wybrano ${playerCount} gracza/graczy`);
+  document.querySelector(".title-screen").hidden = true;
+  startMovementTest({ playerCount, onExit: () => {
+    document.querySelector(".title-screen").hidden = false;
+    select(0);
+  }});
 }
 
 choices.forEach((button, index) => {
@@ -26,6 +29,7 @@ choices.forEach((button, index) => {
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
+  if (document.querySelector(".title-screen").hidden) return;
   if (key === "arrowup" || key === "w") {
     event.preventDefault();
     select(0);
