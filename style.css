@@ -187,9 +187,9 @@ body {
   image-rendering:pixelated; image-rendering:crisp-edges;
 }
 .test-player.face-left img { transform:translateX(-50%) scaleX(-1); }
-/* Bill walking remains at the reference size; jump is 20% smaller,
+/* Bill walking remains at the reference size; jump is 30% smaller,
    prone is 10% smaller. Keep facing direction in each scaled pose. */
-.test-player.is-jumping:not(.face-left) img { transform:translateX(-50%) scale(.8); }
+.test-player.is-jumping:not(.face-left) img { transform:translateX(-50%) scale(.7); }
 .test-player.is-jumping.face-left img { transform:translateX(-50%) scaleX(-1) scale(.8); }
 .test-player.is-prone:not(.face-left) img { transform:translateX(-50%) scale(.9); }
 .test-player.is-prone.face-left img { transform:translateX(-50%) scaleX(-1) scale(.9); }
