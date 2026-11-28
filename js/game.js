@@ -1,38 +1,41 @@
-import { Input } from "./core/input.js";
-import { Renderer } from "./core/renderer.js";
-import { TitleScene } from "./scenes/title-scene.js";
+const choices = [...document.querySelectorAll(".choice")];
+let selected = 0;
 
-const canvas = document.querySelector("#game");
-if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Brak canvas #game.");
-
-const input = new Input();
-const renderer = new Renderer(canvas, 640, 480);
-let scene;
-let lastTime = 0;
-let selectedPlayerCount = 1;
-
-function beginGame(playerCount) {
-  selectedPlayerCount = playerCount;
-  scene = {
-    update() {},
-    draw() {
-      renderer.clear("#080d19");
-      renderer.text("MISSION 01", 320, 210, 24, "#f5df45", "center");
-      renderer.text(`${selectedPlayerCount} PLAYER${selectedPlayerCount === 2 ? "S" : ""}`, 320, 252, 16, "#fff", "center");
-      renderer.text("SILNIK GRY W BUDOWIE", 320, 460, 12, "#aaa", "center");
-    }
-  };
+function select(index) {
+  selected = Math.max(0, Math.min(choices.length - 1, index));
+  choices.forEach((button, i) => {
+    const active = i === selected;
+    button.classList.toggle("selected", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
 }
 
-scene = new TitleScene(renderer, input, beginGame);
-
-function frame(timestamp) {
-  const dt = Math.min((timestamp - (lastTime || timestamp)) / 1000, 1 / 30);
-  lastTime = timestamp;
-  scene.update(dt);
-  scene.draw();
-  input.endFrame();
-  requestAnimationFrame(frame);
+function startGame(playerCount) {
+  // Ekran tytułowy jest pierwszym etapem. Właściwe sceny gry dołączymy,
+  // gdy zaczniemy budować plansze i silnik rozgrywki.
+  window.dispatchEvent(new CustomEvent("contra:start", { detail: { playerCount } }));
+  console.info(`CONTRA VIETNAM — wybrano ${playerCount} gracza/graczy`);
 }
 
-requestAnimationFrame(frame);
+choices.forEach((button, index) => {
+  button.addEventListener("click", () => {
+    select(index);
+    startGame(index + 1);
+  });
+});
+
+window.addEventListener("keydown", (event) => {
+  const key = event.key.toLowerCase();
+  if (key === "arrowup" || key === "w") {
+    event.preventDefault();
+    select(0);
+  } else if (key === "arrowdown" || key === "s") {
+    event.preventDefault();
+    select(1);
+  } else if (key === "enter" || key === "z" || key === " ") {
+    event.preventDefault();
+    startGame(selected + 1);
+  }
+});
+
+select(0);
