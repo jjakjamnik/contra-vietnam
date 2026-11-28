@@ -1,5 +1,5 @@
 export class Renderer {
-  constructor(canvas, width = 256, height = 240) {
+  constructor(canvas, width = 640, height = 480) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d", { alpha: false });
     if (!this.ctx) throw new Error("Canvas 2D nie jest dostępny.");
@@ -15,7 +15,7 @@ export class Renderer {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(Math.round(x), Math.round(y), width, height);
   }
-  text(value, x, y, size = 8, color = "#fff", align = "left") {
+  text(value, x, y, size = 16, color = "#fff", align = "left") {
     const ctx = this.ctx;
     ctx.font = `${size}px "Press Start 2P", monospace`;
     ctx.textAlign = align;

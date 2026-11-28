@@ -6,82 +6,79 @@ export class TitleScene {
     this.onStart = onStart;
     this.elapsed = 0;
     this.selection = 0;
-    this.logo = null;
-    this.soldiers = null;
-    this.loadAssets();
+    this.logo = new Image();
+    this.soldiers = new Image();
+    this.logoReady = false;
+    this.soldiersReady = false;
+    this.logo.onload = () => { this.logoReady = true; };
+    this.soldiers.onload = () => { this.soldiersReady = true; };
+    this.logo.src = "assets/title/contra-logo.png";
+    this.soldiers.src = "assets/title/contra-soldiers.png";
   }
-  loadAssets() {
-    const sheet = new Image();
-    sheet.onload = () => {
-      const crop = document.createElement("canvas");
-      crop.width = 240; crop.height = 128;
-      const ctx = crop.getContext("2d", { willReadFrequently: true });
-      ctx.drawImage(sheet, 20, 448, 240, 128, 0, 0, 240, 128);
-      this.removeKeyColor(ctx, crop.width, crop.height);
-      this.logo = crop;
-    };
-    sheet.src = "assets/miscellaneous/Miscellaneous%20-%20Title%20Screens.png";
-    const soldiers = new Image();
-    soldiers.onload = () => { this.soldiers = soldiers; };
-    soldiers.src = "assets/characters/contra-title-soldiers.png";
-  }
-  removeKeyColor(ctx, width, height) {
-    const image = ctx.getImageData(0, 0, width, height);
-    const p = image.data, seen = new Uint8Array(width * height), queue = new Int32Array(width * height);
-    let read = 0, write = 0;
-    const isKey = i => { const n=i*4; return p[n]>190 && p[n+2]>190 && p[n+1]<90; };
-    const add = i => { if (!seen[i] && isKey(i)) { seen[i]=1; queue[write++]=i; } };
-    for(let x=0;x<width;x++){add(x);add((height-1)*width+x);}
-    for(let y=0;y<height;y++){add(y*width);add(y*width+width-1);}
-    while(read<write){
-      const i=queue[read++],x=i%width,y=(i/width)|0;
-      p[i*4+3]=0;
-      if(x)add(i-1);if(x<width-1)add(i+1);if(y)add(i-width);if(y<height-1)add(i+width);
-    }
-    ctx.putImageData(image,0,0);
-  }
+
   update(dt) {
     this.elapsed += dt;
-    if(this.input.wasPressed("arrowup","w")) this.selection=0;
-    if(this.input.wasPressed("arrowdown","s")) this.selection=1;
-    if(this.input.wasPressed("enter","z"," ")) this.onStart(this.selection+1);
+    if (this.input.wasPressed("arrowup", "w")) this.selection = 0;
+    if (this.input.wasPressed("arrowdown", "s")) this.selection = 1;
+    if (this.input.wasPressed("enter", "z", " ")) this.onStart(this.selection + 1);
   }
-  outlinedText(text,x,y,size,align="left") {
-    const c=this.ctx;
-    c.font=`${size}px "Press Start 2P", monospace`;
-    c.textAlign=align;c.textBaseline="middle";
-    c.fillStyle="#b50062";c.fillText(text,x+1,y+1);
-    c.fillStyle="#dedede";c.fillText(text,x,y);
+
+  outlinedText(value, x, y, size, align = "left") {
+    const c = this.ctx;
+    c.font = `${size}px "Press Start 2P", monospace`;
+    c.textAlign = align;
+    c.textBaseline = "middle";
+    c.fillStyle = "#8c164f";
+    c.fillText(value, x + 2, y + 2);
+    c.fillStyle = "#e5e5e5";
+    c.fillText(value, x, y);
   }
-  drawFlameV() {
-    const c=this.ctx;
-    const rows=[
-      [0,0,22,4,"#e8e82c"],[2,4,18,4,"#e8e82c"],[4,8,14,4,"#f0c51d"],
-      [6,12,10,4,"#ed8b16"],[8,16,6,4,"#e84b18"],[10,20,2,4,"#cf2524"]
-    ];
-    rows.forEach(([x,y,w,h,color])=>{c.fillStyle=color;c.fillRect(54+x,108+y,w,h);});
-    c.fillStyle="#fff";c.fillRect(53,107,3,3);c.fillRect(75,107,3,3);
-    c.fillStyle="#8d8d8d";c.fillRect(59,130,3,3);c.fillRect(69,130,3,3);
+
+  drawVietnam() {
+    // The V gets a small yellow/red flame accent; the rest stays a clean pixel-font wordmark.
+    const c = this.ctx;
+    c.save();
+    c.font = '27px "Press Start 2P", monospace';
+    c.textAlign = "left";
+    c.textBaseline = "middle";
+    c.fillStyle = "#b52b22";
+    c.fillText("V", 194, 273);
+    c.fillStyle = "#e7df27";
+    c.fillText("V", 192, 270);
+    c.restore();
+    this.outlinedText("IETNAM", 222, 270, 21, "left");
   }
+
+  drawPointer(y, visible) {
+    if (!visible) return;
+    const c = this.ctx;
+    c.fillStyle = "#d9e923";
+    c.fillRect(137, y - 7, 28, 8);
+    c.fillRect(147, y - 13, 8, 20);
+  }
+
   draw() {
-    const r=this.renderer,c=this.ctx;
-    r.clear("#000");
-    if(this.logo)c.drawImage(this.logo,43,19,170,91);
-    else this.outlinedText("CONTRA",128,67,25,"center");
-    this.drawFlameV();
-    this.outlinedText("IETNAM",83,130,10,"left");
-    const blink=Math.floor(this.elapsed*3)%2===0;
-    r.text("WYBÓR GRACZY",56,158,6,"#bdbdbd","left");
-    ["1 GRACZ","2 GRACZY"].forEach((label,i)=>{
-      const y=176+i*17;
-      if(this.selection===i&&blink){
-        r.rect(54,y-3,4,4,"#d9e923");r.rect(58,y-5,4,8,"#d9e923");r.rect(62,y-3,4,4,"#d9e923");
-      }
-      r.text(label,72,y,7,this.selection===i?"#eeeeee":"#b9b9b9","left");
+    const r = this.renderer;
+    const c = this.ctx;
+    r.clear("#000000");
+
+    if (this.logoReady) c.drawImage(this.logo, 126, 94, 393, 162);
+    if (this.soldiersReady) c.drawImage(this.soldiers, 337, 239, 180, 144);
+
+    this.drawVietnam();
+
+    const blink = Math.floor(this.elapsed * 3) % 2 === 0;
+    r.text("WYBÓR GRACZY", 143, 305, 16, "#bdbdbd", "left");
+
+    const labels = ["1 GRACZ", "2 GRACZY"];
+    labels.forEach((label, i) => {
+      const y = 345 + i * 40;
+      this.drawPointer(y, this.selection === i && blink);
+      r.text(label, 176, y, 18, this.selection === i ? "#e5e5e5" : "#bdbdbd", "left");
     });
-    if(this.soldiers)c.drawImage(this.soldiers,158,126,75,58);
-    r.text("© 2026",128,207,5,"#bdbdbd","center");
-    r.text("PROJEKT FANOWSKI",128,219,5,"#bdbdbd","center");
-    r.text("BY J JAK JAMNIK",128,231,5,"#bdbdbd","center");
+
+    r.text("© 2026", 320, 420, 13, "#bdbdbd", "center");
+    r.text("PROJEKT FANOWSKI", 320, 443, 13, "#bdbdbd", "center");
+    r.text("BY J JAK JAMNIK", 320, 466, 13, "#bdbdbd", "center");
   }
 }
