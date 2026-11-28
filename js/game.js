@@ -19,6 +19,7 @@ const keys = new Set();
 let lastFrame = 0;
 let elapsed = 0;
 let gameStarted = false;
+let selectedPlayers = 1;
 let gameOver = false;
 let victory = false;
 let score = 0;
@@ -129,13 +130,15 @@ function drawTitle() {
     ctx.restore();
   }
   if (titleLogo) ctx.drawImage(titleLogo, 24, 22, 208, 111);
-  else {
-    text("CONTRA", 128, 62, 34, "#e83a2e", "center");
-    text("VIETNAM", 128, 85, 10, "#f4d94c", "center");
-  }
-  text("VIETNAM", 128, 145, 10, "#f4d94c", "center");
-  if (Math.floor(elapsed * 2) % 2 === 0) text("PRESS START", 128, 171, 9, "#f5df45", "center");
-  text("1 PLAYER     HIGH SCORE  000000", 128, 225, 6, "#b5b39a", "center");
+  else text("CONTRA", 128, 66, 34, "#e83a2e", "center");
+
+  // Klasyczne menu wyboru liczby graczy.
+  // Wskaźnik miga jak w ekranach tytułowych gier NES.
+  const blink = Math.floor(elapsed * 3) % 2 === 0;
+  if (blink) text(">", 78, selectedPlayers === 1 ? 193 : 207, 10, "#f5df45", "center");
+  text("1 PLAYER", 128, 193, 9, selectedPlayers === 1 ? "#f5df45" : "#eeeeee", "center");
+  text("2 PLAYERS", 128, 207, 9, selectedPlayers === 2 ? "#f5df45" : "#eeeeee", "center");
+  text("© 1987 KONAMI", 128, 230, 6, "#b5b39a", "center");
 }
 
 function drawJungle(offset) {
@@ -225,7 +228,9 @@ function resetGame() {
 function startGame() {
   resetGame();
   gameStarted = true;
-  if (statusMessage) statusMessage.textContent = "MISJA 01 — POWODZENIA, ŻOŁNIERZU!";
+  if (statusMessage) statusMessage.textContent = selectedPlayers === 1
+    ? "1 PLAYER — MISJA 01"
+    : "2 PLAYERS — WYBRANO TRYB DWÓCH GRACZY";
 }
 
 function spawnEnemies() {
@@ -366,9 +371,15 @@ function handleKeyDown(event) {
   const key = event.key.toLowerCase();
   if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
   keys.add(key);
-  if (key === "enter") {
-    if (!gameStarted || gameOver || victory) startGame();
+
+  // Menu tytułowe: góra/dół zmienia liczbę graczy, Enter/Z zatwierdza.
+  if (!gameStarted) {
+    if (key === "arrowup" || key === "w") selectedPlayers = 1;
+    if (key === "arrowdown" || key === "s") selectedPlayers = 2;
+    if (key === "enter" || key === "z" || key === " ") startGame();
+    return;
   }
+  if (key === "enter" && (gameOver || victory)) startGame();
 }
 function handleKeyUp(event) { keys.delete(event.key.toLowerCase()); }
 window.addEventListener("keydown", handleKeyDown);
