@@ -43,7 +43,7 @@ export function startMovementTest({ playerCount = 1, onExit }) {
   let jumpClock = 0;
   const keys = new Set();
   const gravity = 1450;
-  const jumpVelocity = -590;
+  const jumpVelocity = -620;
   const speed = 190;
 
   function setSprite(src) {
