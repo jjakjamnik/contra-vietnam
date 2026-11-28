@@ -6,8 +6,8 @@ const SPRITES = {
     "assets/sprites/raw/contra/sprite_04.png",
     "assets/sprites/raw/contra/sprite_05.png"
   ],
-  jump: "assets/sprites/raw/contra/sprite_0b.png",
-  crouch: "assets/sprites/raw/contra/sprite_0a.png"
+  jump: ["assets/sprites/raw/contra/sprite_08.png", "assets/sprites/raw/contra/sprite_09.png"],
+  prone: "assets/sprites/raw/contra/sprite_17.png"
 };
 
 export function startMovementTest({ playerCount = 1, onExit }) {
@@ -40,6 +40,7 @@ export function startMovementTest({ playerCount = 1, onExit }) {
   let frame = 0;
   let last = 0;
   let walkClock = 0;
+  let jumpClock = 0;
   const keys = new Set();
   const gravity = 1450;
   const jumpVelocity = -540;
@@ -50,9 +51,10 @@ export function startMovementTest({ playerCount = 1, onExit }) {
   }
   function updateSprite(dt) {
     if (crouching && onGround) {
-      setSprite(SPRITES.crouch);
+      setSprite(SPRITES.prone);
     } else if (!onGround) {
-      setSprite(SPRITES.jump);
+      jumpClock += dt;
+      setSprite(SPRITES.jump[Math.floor(jumpClock / 0.12) % SPRITES.jump.length]);
     } else if (Math.abs(frame) > 0) {
       walkClock += dt;
       const idx = Math.floor(walkClock / 0.11) % SPRITES.walk.length;
@@ -93,6 +95,7 @@ export function startMovementTest({ playerCount = 1, onExit }) {
     if (key === "escape") { cleanup(); onExit?.(); return; }
     if ((key === " " || key === "arrowup" || key === "w") && onGround && !crouching) {
       vy = jumpVelocity;
+      jumpClock = 0;
       onGround = false;
     }
     keys.add(key);
