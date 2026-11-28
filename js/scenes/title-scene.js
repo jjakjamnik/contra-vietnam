@@ -7,60 +7,44 @@ export class TitleScene {
     this.elapsed = 0;
     this.selection = 0;
     this.logo = null;
-    this.logoReady = false;
-    this.loadLogo();
+    this.soldiers = null;
+    this.loadAssets();
   }
 
-  loadLogo() {
+  loadAssets() {
     const sheet = new Image();
     sheet.onload = () => {
       const crop = document.createElement("canvas");
-      crop.width = 240;
-      crop.height = 128;
+      crop.width = 240; crop.height = 128;
       const ctx = crop.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(sheet, 20, 448, 240, 128, 0, 0, 240, 128);
-      this.removeEdgeBackground(ctx, crop.width, crop.height);
+      this.removeKeyColor(ctx, crop.width, crop.height, "magenta");
       this.logo = crop;
-      this.logoReady = true;
     };
     sheet.src = "assets/miscellaneous/Miscellaneous%20-%20Title%20Screens.png";
+
+    const soldiers = new Image();
+    soldiers.onload = () => { this.soldiers = soldiers; };
+    soldiers.src = "assets/characters/contra-title-soldiers.png";
   }
 
-  removeEdgeBackground(ctx, width, height) {
+  removeKeyColor(ctx, width, height, key) {
     const image = ctx.getImageData(0, 0, width, height);
-    const pixels = image.data;
-    const visited = new Uint8Array(width * height);
-    const queue = new Int32Array(width * height);
+    const p = image.data, seen = new Uint8Array(width * height), queue = new Int32Array(width * height);
     let read = 0, write = 0;
-    const isKey = index => {
-      const p = index * 4;
-      return pixels[p] > 190 && pixels[p + 2] > 190 && pixels[p + 1] < 90;
+    const isKey = i => {
+      const n = i * 4;
+      return key === "magenta" ? p[n] > 190 && p[n + 2] > 190 && p[n + 1] < 90 : p[n] < 35 && p[n + 1] < 35 && p[n + 2] < 35;
     };
-    const add = index => {
-      if (!visited[index] && isKey(index)) {
-        visited[index] = 1;
-        queue[write++] = index;
-      }
-    };
-    for (let x = 0; x < width; x++) {
-      add(x);
-      add((height - 1) * width + x);
+    const add = i => { if (!seen[i] && isKey(i)) { seen[i] = 1; queue[write++] = i; } };
+    for (let x=0;x<width;x++){add(x);add((height-1)*width+x);}
+    for (let y=0;y<height;y++){add(y*width);add(y*width+width-1);}
+    while(read<write){
+      const i=queue[read++],x=i%width,y=(i/width)|0;
+      p[i*4+3]=0;
+      if(x)add(i-1);if(x<width-1)add(i+1);if(y)add(i-width);if(y<height-1)add(i+width);
     }
-    for (let y = 0; y < height; y++) {
-      add(y * width);
-      add(y * width + width - 1);
-    }
-    while (read < write) {
-      const index = queue[read++];
-      pixels[index * 4 + 3] = 0;
-      const x = index % width;
-      const y = Math.floor(index / width);
-      if (x > 0) add(index - 1);
-      if (x < width - 1) add(index + 1);
-      if (y > 0) add(index - width);
-      if (y < height - 1) add(index + width);
-    }
-    ctx.putImageData(image, 0, 0);
+    ctx.putImageData(image,0,0);
   }
 
   update(dt) {
@@ -70,56 +54,50 @@ export class TitleScene {
     if (this.input.wasPressed("enter", "z", " ")) this.onStart(this.selection + 1);
   }
 
-  draw() {
-    const r = this.renderer;
-    r.clear("#070d19");
-    this.drawBackground();
-    if (this.logoReady) {
-      this.ctx.drawImage(this.logo, 8, 8, 240, 128);
-    } else {
-      r.text("CONTRA", 128, 65, 34, "#e83a2e", "center");
-    }
-
-    const blink = Math.floor(this.elapsed * 3) % 2 === 0;
-    const options = ["1 PLAYER", "2 PLAYERS"];
-    options.forEach((label, index) => {
-      const y = 190 + index * 15;
-      if (this.selection === index && blink) r.text("▶", 77, y, 8, "#f5df45", "center");
-      r.text(label, 128, y, 9, this.selection === index ? "#f5df45" : "#deded2", "center");
-    });
-    r.text("© 1987 KONAMI", 128, 230, 6, "#b5b39a", "center");
+  outlinedText(text, x, y, size, align = "left") {
+    const ctx = this.ctx;
+    ctx.font = `bold ${size}px monospace`;
+    ctx.textAlign = align; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#b50062"; ctx.fillText(text, x+1, y+1);
+    ctx.fillStyle = "#dedede"; ctx.fillText(text, x, y);
   }
 
-  drawBackground() {
-    const r = this.renderer;
-    r.rect(0, 0, 256, 240, "#080d1b");
-    r.rect(0, 105, 256, 78, "#14242a");
-    for (let i = 0; i < 38; i++) {
-      const x = (i * 71 + 17) % 256;
-      const y = 12 + (i * 29) % 90;
-      if (Math.sin(this.elapsed * 2.2 + i) > -0.15) r.rect(x, y, 1, 1, "#d5d8c6");
-    }
-    r.rect(190, 31, 12, 12, "#d8d2a2");
-    const ctx = this.ctx;
-    ctx.fillStyle = "#18283a";
-    ctx.beginPath();
-    ctx.moveTo(0, 153); ctx.lineTo(32, 105); ctx.lineTo(66, 143);
-    ctx.lineTo(105, 111); ctx.lineTo(146, 151); ctx.lineTo(190, 103);
-    ctx.lineTo(230, 143); ctx.lineTo(256, 119); ctx.lineTo(256, 185);
-    ctx.lineTo(0, 185); ctx.closePath(); ctx.fill();
-    r.rect(0, 179, 256, 61, "#33251c");
-    r.rect(0, 179, 256, 4, "#68713b");
-    for (let i = 0; i < 17; i++) {
-      const x = i * 17 - 4;
-      const h = 14 + (i * 13) % 19;
-      r.rect(x + 5, 177 - h, 5, h + 8, "#172c22");
-      r.rect(x, 167 - h, 17, 7, "#1c3928");
-      r.rect(x + 3, 160 - h, 11, 8, "#21432d");
-    }
-    for (let i = 0; i < 30; i++) {
-      const x = (i * 47 + 11) % 256;
-      const y = 190 + (i * 17) % 43;
-      r.rect(x, y, 2 + i % 3, 1, i % 2 ? "#51402a" : "#263b27");
-    }
+  drawFlameV() {
+    const c=this.ctx;
+    // Pixel-stepped yellow-to-red V, matching the flame treatment of the Contra C.
+    const rows=[
+      [0,0,22,4,"#e8e82c"],[2,4,18,4,"#e8e82c"],[4,8,14,4,"#f0c51d"],
+      [6,12,10,4,"#ed8b16"],[8,16,6,4,"#e84b18"],[10,20,2,4,"#cf2524"]
+    ];
+    rows.forEach(([x,y,w,h,color])=>{c.fillStyle=color;c.fillRect(54+x,108+y,w,h);});
+    c.fillStyle="#fff"; c.fillRect(53,107,3,3); c.fillRect(75,107,3,3);
+    c.fillStyle="#8d8d8d"; c.fillRect(59,130,3,3); c.fillRect(69,130,3,3);
+  }
+
+  draw() {
+    const r=this.renderer, c=this.ctx;
+    r.clear("#000000");
+    if(this.logo) c.drawImage(this.logo,43,19,170,91);
+    else this.outlinedText("CONTRA",128,67,25,"center");
+
+    this.drawFlameV();
+    this.outlinedText("IETNAM",83,130,12,"left");
+
+    const blink=Math.floor(this.elapsed*3)%2===0;
+    r.text("WYBOR GRACZY",56,158,7,"#bdbdbd","left");
+    const options=["1 GRACZ","2 GRACZY"];
+    options.forEach((label,i)=>{
+      const y=176+i*17;
+      if(this.selection===i && blink){
+        r.rect(54,y-3,4,4,"#d9e923"); r.rect(58,y-5,4,8,"#d9e923");
+        r.rect(62,y-3,4,4,"#d9e923");
+      }
+      r.text(label,72,y,8,this.selection===i?"#eeeeee":"#b9b9b9","left");
+    });
+
+    if(this.soldiers) c.drawImage(this.soldiers,158,126,75,58);
+    r.text("© 2026",128,207,6,"#bdbdbd","center");
+    r.text("PROJEKT FANOWSKI",128,219,6,"#bdbdbd","center");
+    r.text("BY J JAK JAMNIK",128,231,6,"#bdbdbd","center");
   }
 }
