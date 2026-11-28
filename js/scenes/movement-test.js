@@ -65,6 +65,8 @@ export function startMovementTest({ playerCount = 1, onExit }) {
     }
     player.classList.toggle("face-left", facing < 0);
     player.classList.toggle("is-crouching", crouching && onGround);
+    player.classList.toggle("is-jumping", !onGround);
+    player.classList.toggle("is-prone", crouching && onGround);
   }
 
   function tick(time) {
